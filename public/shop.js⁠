@@ -1,0 +1,94 @@
+// Sécurité : Vérification simple du cookie d'accès
+document.addEventListener('DOMContentLoaded', () => {
+    const cookies = document.cookie;
+    if (!cookies.includes('nordic_user=')) {
+        alert("Accès refusé. Veuillez vous connecter via Discord.");
+        window.location.href = '/';
+        return;
+    }
+    
+    // Extraction du pseudo Discord pour l'affichage
+    const username = cookies.split('nordic_user=')[1]?.split(';')[0];
+    if (username) {
+        document.getElementById('user-display').innerText = decodeURIComponent(username).toUpperCase();
+    }
+});
+
+// Gestionnaire de Panier
+const cartManager = {
+    items: [],
+
+    add(name, price) {
+        const existing = this.items.find(item => item.name === name);
+        if (existing) {
+            existing.quantity += 1;
+        } else {
+            this.items.push({ name, price, quantity: 1 });
+        }
+        this.render();
+    },
+
+    render() {
+        const container = document.getElementById('cart-items');
+        const totalSpan = document.getElementById('cart-total');
+        
+        if (this.items.length === 0) {
+            container.innerHTML = '<p class="empty-msg">Votre panier est vide.</p>';
+            totalSpan.innerText = '0 FCFA';
+            return;
+        }
+
+        container.innerHTML = '';
+        let total = 0;
+
+        this.items.forEach((item, index) => {
+            total += item.price * item.quantity;
+            container.innerHTML += `
+                <div class="cart-item">
+                    <div>
+                        <h4>${item.name}</h4>
+                        <p>${item.price} FCFA x ${item.quantity}</p>
+                    </div>
+                    <button class="btn-remove" onclick="cartManager.remove(${index})">✕</button>
+                </div>
+            `;
+        });
+
+        totalSpan.innerText = `${total} FCFA`;
+    },
+
+    remove(index) {
+        this.items.splice(index, 1);
+        this.render();
+    },
+
+    async checkout() {
+        if (this.items.length === 0) return alert("Votre panier est vide.");
+        
+        const btn = document.getElementById('checkout-btn');
+        btn.innerText = "TRAITEMENT...";
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cart: this.items })
+            });
+
+            if (response.ok) {
+                alert("Commande enregistrée ! L'administrateur va valider votre panier.");
+                this.items = [];
+                this.render();
+            } else {
+                alert("Erreur lors de la validation de la commande.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Erreur réseau.");
+        } finally {
+            btn.innerText = "VALIDER LA COMMANDE";
+            btn.disabled = false;
+        }
+    }
+};
