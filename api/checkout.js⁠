@@ -1,0 +1,80 @@
+import axios from 'axios';
+
+export default async function handler(req, res) {
+    // Sécurité élémentaire : Refuser tout ce qui n'est pas une requête POST
+    if (req.method !== 'POST') {
+        res.setHeader('Allow', ['POST']);
+        return res.status(405).json({ error: `Méthode ${req.method} non autorisée.` });
+    }
+
+    const { cart } = req.body;
+
+    // Récupération et décodage du pseudo de l'utilisateur stocké dans le cookie
+    const rawCookies = req.headers.cookie || '';
+    const userCookieMatch = rawCookies.match(/nordic_user=([^;]+)/);
+    const discordUsername = userCookieMatch ? decodeURIComponent(userCookieMatch[1]) : 'Client Anonyme';
+
+    // Validation du contenu du panier
+    if (!cart || !Array.isArray(cart) || cart.length === 0) {
+        return res.status(400).json({ error: "Le panier est vide ou invalide." });
+    }
+
+    let totalOrderPrice = 0;
+    let itemsReport = "";
+
+    // Construction propre du récapitulatif pour ton Discord staff
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        totalOrderPrice += itemTotal;
+        itemsReport += `• **${item.name}** (x${item.quantity}) — ${itemTotal.toLocaleString('fr-FR')} FCFA\n`;
+    });
+
+    // Structure propre de l'Embed Discord (Design Noir Minimaliste)
+    const discordPayload = {
+        embeds: [{
+            title: "🛍️ NOUVELLE COMMANDE REÇUE",
+            color: 0x000000, 
+            description: `Un client vient de valider son panier depuis la boutique sécurisée.`,
+            fields: [
+                { 
+                    name: "👤 Client (Discord)", 
+                    value: `\`${discordUsername}\``, 
+                    inline: true 
+                },
+                { 
+                    name: "💰 Total de la commande", 
+                    value: `**${totalOrderPrice.toLocaleString('fr-FR')} FCFA**`, 
+                    inline: true 
+                },
+                { 
+                    name: "📦 Détails des articles", 
+                    value: itemsReport || "Aucun article détecté." 
+                },
+                { 
+                    name: "📞 Gestion Admin (+225)", 
+                    value: `[Ouvrir la discussion WhatsApp avec l'Acheteur](https://wa.me/2250702797128?text=Bonjour,%20votre%20commande%20de%20${totalOrderPrice}%20FCFA%20sur%20NORDIC%20a%20bien%20ete%20recue.)` 
+                }
+            ],
+            footer: {
+                text: "NØRD!C BRAND HUB — 100% Opérationnel"
+            },
+            timestamp: new Date().toISOString()
+        }]
+    };
+
+    try {
+        // Envoi des données vers l'URL de ton Webhook configurée sur Vercel
+        if (!process.env.WEBHOOK_URL) {
+            return res.status(500).json({ error: "Configuration Webhook manquante sur la plateforme de déploiement." });
+        }
+
+        await axios.post(process.env.WEBHOOK_URL, discordPayload);
+        
+        // Tout s'est bien passé, on renvoie une réponse positive au script frontend
+        return res.status(200).json({ success: true, message: "Commande transmise avec succès." });
+
+    } catch (error) {
+        console.error("Erreur lors de l'envoi du webhook de commande :", error.message);
+        return res.status(500).json({ error: "Impossible de notifier l'équipe d'administration." });
+    }
+}
