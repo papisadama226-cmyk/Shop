@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NØRD!C — OFFICIAL STORE</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+    <header class="shop-header">
+        <h1 class="shop-logo">NØRD!C</h1>
+        <div class="user-status">
+            <span class="status-dot green"></span>
+            <span id="user-display">VÉRIFIÉ</span>
+        </div>
+    </header>
+
+    <main class="shop-container">
+        <section class="products-grid">
+            
+            <div class="product-card">
+                <div class="product-thumb">
+                    <div class="placeholder-img">NØRD!C HALFTONE</div>
+                </div>
+                <div class="product-info">
+                    <h3>T-SHIRT HALFTONE FLOWER</h3>
+                    <p class="price">10 000 FCFA</p>
+                    <button class="btn-buy" onclick="cartManager.add('T-Shirt Halftone Flower', 10000)">Ajouter au panier</button>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-thumb">
+                    <div class="placeholder-img">NØRD!C GOD'S PLAN</div>
+                </div>
+                <div class="product-info">
+                    <h3>T-SHIRT GOD'S PLAN</h3>
+                    <p class="price">10 000 FCFA</p>
+                    <button class="btn-buy" onclick="cartManager.add('T-Shirt God\'s Plan', 10000)">Ajouter au panier</button>
+                </div>
+            </div>
+
+        </section>
+
+        <aside class="cart-sidebar">
+            <h2>VOTRE PANIER</h2>
+            <div class="cart-lines" id="cart-items">
+                <p class="empty-msg">Votre panier est vide.</p>
+            </div>
+            <div class="cart-summary">
+                <div class="total-line">
+                    <span>TOTAL</span>
+                    <span id="cart-total">0 FCFA</span>
+                </div>
+                <button class="btn-checkout" id="checkout-btn" onclick="cartManager.checkout()">Valider la commande</button>
+            </div>
+        </aside>
+    </main>
+
+    <script src="/shop.js"></script>
+</body>
+</html>
